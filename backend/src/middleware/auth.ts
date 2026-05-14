@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error('JWT_SECRET env var is required');
+const JWT_SECRET_SAFE = JWT_SECRET as string;
 
 export interface AuthRequest extends Request {
   userId: string;
@@ -15,7 +16,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     return;
   }
   try {
-    const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as { userId: string };
+    const payload = jwt.verify(token, JWT_SECRET_SAFE, { algorithms: ['HS256'] }) as unknown as { userId: string };
     (req as AuthRequest).userId = payload.userId;
     next();
   } catch {

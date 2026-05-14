@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
 
 // PATCH /tasks/:id — edit name, interval, ownership
 router.patch('/:id', async (req, res) => {
-  const { userId } = req as AuthRequest;
+  const { userId } = req as unknown as AuthRequest;
   const [existing] = await db.select().from(tasks).where(eq(tasks.id, req.params.id));
   if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
   if (existing.ownerId !== null && existing.ownerId !== userId) {
@@ -108,7 +108,7 @@ router.patch('/:id', async (req, res) => {
 
 // DELETE /tasks/:id — shared: any user; personal: owner only
 router.delete('/:id', async (req, res) => {
-  const { userId } = req as AuthRequest;
+  const { userId } = req as unknown as AuthRequest;
   const [existing] = await db.select().from(tasks).where(eq(tasks.id, req.params.id));
   if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
   if (existing.ownerId !== null && existing.ownerId !== userId) {
@@ -123,7 +123,7 @@ router.delete('/:id', async (req, res) => {
 
 // POST /tasks/:id/complete — reset deadline from completion time; reschedule
 router.post('/:id/complete', async (req, res) => {
-  const { userId } = req as AuthRequest;
+  const { userId } = req as unknown as AuthRequest;
   const [task] = await db.select().from(tasks).where(eq(tasks.id, req.params.id));
   if (!task) { res.status(404).json({ error: 'Not found' }); return; }
   if (task.ownerId !== null && task.ownerId !== userId) {
