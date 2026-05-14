@@ -1,7 +1,7 @@
 import webpush from 'web-push';
-import { eq, isNotNull } from 'drizzle-orm';
+import { eq, and, isNotNull } from 'drizzle-orm';
 import { db } from './db';
-import { users } from './db/schema';
+import { users, householdMembers } from './db/schema';
 
 const { VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
 if (!VAPID_EMAIL || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
@@ -14,10 +14,33 @@ webpush.setVapidDetails(
   VAPID_PRIVATE_KEY,
 );
 
-export async function sendPushNotification(taskName: string, ownerId: string | null): Promise<void> {
-  const targets = ownerId
-    ? await db.select().from(users).where(eq(users.id, ownerId))
-    : await db.select().from(users).where(isNotNull(users.pushSubscription));
+export async function sendPushNotification(
+  taskName: string,
+  ownerId: string | null,
+  householdId: string | null,
+): Promise<void> {
+  let targets: { pushSubscription: unknown }[];
+
+  if (householdId) {
+    targets = await db
+      .select({ pushSubscription: users.pushSubscription })
+      .from(householdMembers)
+      .innerJoin(users, eq(householdMembers.userId, users.id))
+      .where(
+        and(
+          eq(householdMembers.householdId, householdId),
+          eq(householdMembers.status, 'active'),
+          isNotNull(users.pushSubscription),
+        ),
+      );
+  } else if (ownerId) {
+    targets = await db
+      .select({ pushSubscription: users.pushSubscription })
+      .from(users)
+      .where(eq(users.id, ownerId));
+  } else {
+    return;
+  }
 
   const results = await Promise.allSettled(
     targets

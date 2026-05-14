@@ -9,6 +9,7 @@ export function scheduleTask(
   taskId: string,
   taskName: string,
   ownerId: string | null,
+  householdId: string | null,
   deadline: Date,
 ): void {
   cancelTask(taskId);
@@ -18,15 +19,13 @@ export function scheduleTask(
 
   const job = schedule.scheduleJob(fireAt, async () => {
     try {
-      await sendPushNotification(taskName, ownerId);
+      await sendPushNotification(taskName, ownerId, householdId);
     } finally {
       jobs.delete(taskId);
     }
   });
 
-  if (job) {
-    jobs.set(taskId, job);
-  }
+  if (job) jobs.set(taskId, job);
 }
 
 export function cancelTask(taskId: string): void {
@@ -40,6 +39,6 @@ export function cancelTask(taskId: string): void {
 export async function scheduleAll(): Promise<void> {
   const allTasks = await db.select().from(tasks);
   for (const task of allTasks) {
-    scheduleTask(task.id, task.name, task.ownerId, task.nextDeadline);
+    scheduleTask(task.id, task.name, task.ownerId, task.householdId, task.nextDeadline);
   }
 }
