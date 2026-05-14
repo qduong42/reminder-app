@@ -3,10 +3,15 @@ import { eq, isNotNull } from 'drizzle-orm';
 import { db } from './db';
 import { users } from './db/schema';
 
+const { VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
+if (!VAPID_EMAIL || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  throw new Error('Missing required VAPID environment variables: VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY');
+}
+
 webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!,
+  `mailto:${VAPID_EMAIL}`,
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY,
 );
 
 export async function sendPushNotification(taskName: string, ownerId: string | null): Promise<void> {
@@ -14,7 +19,7 @@ export async function sendPushNotification(taskName: string, ownerId: string | n
     ? await db.select().from(users).where(eq(users.id, ownerId))
     : await db.select().from(users).where(isNotNull(users.pushSubscription));
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     targets
       .filter(u => u.pushSubscription !== null)
       .map(u =>
@@ -24,4 +29,7 @@ export async function sendPushNotification(taskName: string, ownerId: string | n
         ),
       ),
   );
+  results.forEach(r => {
+    if (r.status === 'rejected') console.error('Push notification failed:', r.reason);
+  });
 }

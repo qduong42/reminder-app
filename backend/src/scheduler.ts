@@ -17,8 +17,11 @@ export function scheduleTask(
   const fireAt = deadline <= now ? new Date(now.getTime() + 1) : deadline;
 
   const job = schedule.scheduleJob(fireAt, async () => {
-    await sendPushNotification(taskName, ownerId);
-    jobs.delete(taskId);
+    try {
+      await sendPushNotification(taskName, ownerId);
+    } finally {
+      jobs.delete(taskId);
+    }
   });
 
   if (job) {
