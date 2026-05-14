@@ -37,7 +37,7 @@ export async function sendPushNotification(
     targets = await db
       .select({ pushSubscription: users.pushSubscription })
       .from(users)
-      .where(eq(users.id, ownerId));
+      .where(and(eq(users.id, ownerId), isNotNull(users.pushSubscription)));
   } else {
     return;
   }

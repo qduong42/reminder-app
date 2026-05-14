@@ -20,7 +20,7 @@ export function TaskForm({ task, households, defaultHouseholdId, onSave, onClose
   const [name, setName] = useState(task?.name ?? '');
   const [intervalInput, setIntervalInput] = useState(task ? formatIntervalForInput(task.intervalHours) : '24h');
   const [householdId, setHouseholdId] = useState<string | undefined>(
-    task?.householdId ?? defaultHouseholdId ?? undefined,
+    task?.householdId ?? defaultHouseholdId,
   );
   const [loading, setLoading] = useState(false);
   const [intervalError, setIntervalError] = useState('');

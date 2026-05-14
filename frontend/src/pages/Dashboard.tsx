@@ -71,8 +71,6 @@ export function Dashboard() {
     'on-track': tasks.filter(t => t.urgency === 'on-track'),
   };
 
-  const currentHouseholdId = scope !== 'all' && scope !== 'personal' ? scope : undefined;
-
   return (
     <div style={{ maxWidth: 700, margin: '0 auto', padding: 16, fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -132,7 +130,7 @@ export function Dashboard() {
         <TaskForm
           task={editTask}
           households={households}
-          defaultHouseholdId={currentHouseholdId}
+          defaultHouseholdId={scope !== 'all' && scope !== 'personal' ? scope : undefined}
           onSave={async () => { setShowForm(false); await loadTasks(); }}
           onClose={() => setShowForm(false)}
         />

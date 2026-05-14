@@ -1,10 +1,23 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { inviteTokens, householdMembers, households } from '../db/schema';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+async function deleteIfExpired(
+  token: string,
+  expiresAt: Date,
+  res: Response,
+): Promise<boolean> {
+  if (expiresAt < new Date()) {
+    await db.delete(inviteTokens).where(eq(inviteTokens.token, token));
+    res.status(410).json({ error: 'Invite expired' });
+    return true;
+  }
+  return false;
+}
 
 // GET /invite/:token — public
 router.get('/:token', async (req, res) => {
@@ -15,12 +28,7 @@ router.get('/:token', async (req, res) => {
     .where(eq(inviteTokens.token, req.params.token));
 
   if (!row) { res.status(404).json({ error: 'Invite not found' }); return; }
-
-  if (row.token.expiresAt < new Date()) {
-    await db.delete(inviteTokens).where(eq(inviteTokens.token, req.params.token));
-    res.status(410).json({ error: 'Invite expired' });
-    return;
-  }
+  if (await deleteIfExpired(req.params.token, row.token.expiresAt, res)) return;
 
   res.json({ householdName: row.householdName, expiresAt: row.token.expiresAt.toISOString() });
 });
@@ -35,12 +43,7 @@ router.post('/:token/join', requireAuth, async (req, res) => {
     .where(eq(inviteTokens.token, req.params.token));
 
   if (!row) { res.status(404).json({ error: 'Invite not found' }); return; }
-
-  if (row.token.expiresAt < new Date()) {
-    await db.delete(inviteTokens).where(eq(inviteTokens.token, req.params.token));
-    res.status(410).json({ error: 'Invite expired' });
-    return;
-  }
+  if (await deleteIfExpired(req.params.token, row.token.expiresAt, res)) return;
 
   const [existing] = await db.select().from(householdMembers).where(
     and(eq(householdMembers.householdId, row.token.householdId), eq(householdMembers.userId, userId)),

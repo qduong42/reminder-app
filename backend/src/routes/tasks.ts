@@ -5,6 +5,7 @@ import { tasks, completions, householdMembers } from '../db/schema';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { computeNextDeadline, getUrgency } from '../deadline';
 import { scheduleTask, cancelTask } from '../scheduler';
+import { isActiveMember } from '../utils/membership';
 
 const router = Router();
 router.use(requireAuth);
@@ -19,22 +20,13 @@ function formatTask(task: typeof tasks.$inferSelect, now = new Date()) {
 }
 
 async function canAccessTask(task: typeof tasks.$inferSelect, userId: string): Promise<boolean> {
-  if (task.householdId) {
-    const [member] = await db.select().from(householdMembers).where(
-      and(
-        eq(householdMembers.householdId, task.householdId),
-        eq(householdMembers.userId, userId),
-        eq(householdMembers.status, 'active'),
-      ),
-    );
-    return !!member;
-  }
+  if (task.householdId) return isActiveMember(task.householdId, userId);
   return task.ownerId === userId;
 }
 
 // GET /tasks — Task Feed, ?scope=personal, or ?householdId=<id>
 router.get('/', async (req, res) => {
-  const { userId } = req as AuthRequest;
+  const { userId } = req as unknown as AuthRequest;
   const { scope, householdId } = req.query as { scope?: string; householdId?: string };
   const now = new Date();
 
@@ -47,14 +39,7 @@ router.get('/', async (req, res) => {
   }
 
   if (householdId) {
-    const [member] = await db.select().from(householdMembers).where(
-      and(
-        eq(householdMembers.householdId, householdId),
-        eq(householdMembers.userId, userId),
-        eq(householdMembers.status, 'active'),
-      ),
-    );
-    if (!member) { res.status(403).json({ error: 'Forbidden' }); return; }
+    if (!(await isActiveMember(householdId, userId))) { res.status(403).json({ error: 'Forbidden' }); return; }
     const rows = await db.select().from(tasks).where(eq(tasks.householdId, householdId));
     res.json(rows.map(t => formatTask(t, now)));
     return;
@@ -78,7 +63,7 @@ router.get('/', async (req, res) => {
 
 // POST /tasks
 router.post('/', async (req, res) => {
-  const { userId } = req as AuthRequest;
+  const { userId } = req as unknown as AuthRequest;
   const { name, intervalHours, householdId } = req.body as {
     name: string;
     intervalHours: number;
@@ -95,15 +80,9 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  if (householdId) {
-    const [member] = await db.select().from(householdMembers).where(
-      and(
-        eq(householdMembers.householdId, householdId),
-        eq(householdMembers.userId, userId),
-        eq(householdMembers.status, 'active'),
-      ),
-    );
-    if (!member) { res.status(403).json({ error: 'Forbidden' }); return; }
+  if (householdId && !(await isActiveMember(householdId, userId))) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
   }
 
   const now = new Date();

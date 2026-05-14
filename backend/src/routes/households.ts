@@ -4,20 +4,10 @@ import { db } from '../db';
 import { households, householdMembers, inviteTokens, users } from '../db/schema';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { generateToken } from '../utils/token';
+import { isActiveMember } from '../utils/membership';
 
 const router = Router();
 router.use(requireAuth);
-
-async function isActiveMember(householdId: string, userId: string): Promise<boolean> {
-  const [member] = await db.select().from(householdMembers).where(
-    and(
-      eq(householdMembers.householdId, householdId),
-      eq(householdMembers.userId, userId),
-      eq(householdMembers.status, 'active'),
-    ),
-  );
-  return !!member;
-}
 
 // POST /households
 router.post('/', async (req, res) => {
@@ -88,8 +78,6 @@ router.post('/:id/invites', async (req, res) => {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  const [household] = await db.select().from(households).where(eq(households.id, req.params.id));
-  if (!household) { res.status(404).json({ error: 'Household not found' }); return; }
 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -128,18 +116,20 @@ router.delete('/:id/members/:targetUserId', async (req, res) => {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  await db.delete(householdMembers).where(
-    and(
-      eq(householdMembers.householdId, req.params.id),
-      eq(householdMembers.userId, req.params.targetUserId),
-    ),
-  );
-  const remaining = await db.select().from(householdMembers).where(
-    and(eq(householdMembers.householdId, req.params.id), eq(householdMembers.status, 'active')),
-  );
-  if (remaining.length === 0) {
-    await db.delete(households).where(eq(households.id, req.params.id));
-  }
+  await db.transaction(async (tx) => {
+    await tx.delete(householdMembers).where(
+      and(
+        eq(householdMembers.householdId, req.params.id),
+        eq(householdMembers.userId, req.params.targetUserId),
+      ),
+    );
+    const remaining = await tx.select().from(householdMembers).where(
+      and(eq(householdMembers.householdId, req.params.id), eq(householdMembers.status, 'active')),
+    );
+    if (remaining.length === 0) {
+      await tx.delete(households).where(eq(households.id, req.params.id));
+    }
+  });
   res.status(204).send();
 });
 
