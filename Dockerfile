@@ -18,4 +18,5 @@ COPY --from=backend-builder /build/dist ./dist
 COPY backend/package*.json ./
 RUN npm ci --omit=dev
 COPY --from=frontend-builder /build/dist ./frontend-dist
+COPY backend/drizzle ./drizzle
 CMD ["node", "dist/server.js"]
