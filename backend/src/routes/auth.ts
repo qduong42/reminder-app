@@ -15,6 +15,11 @@ router.post('/login', async (req, res) => {
     rememberMe?: boolean;
   };
 
+  if (typeof name !== 'string' || typeof password !== 'string') {
+    res.status(400).json({ error: 'name and password are required' });
+    return;
+  }
+
   const [user] = await db.select().from(users).where(eq(users.name, name));
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     res.status(401).json({ error: 'Invalid credentials' });
@@ -34,7 +39,11 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/logout', (_req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
   res.status(204).send();
 });
 
