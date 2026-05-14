@@ -1,9 +1,11 @@
 import { useState, FormEvent } from 'react';
-import { api, Task } from '../api';
+import { api, Task, Household } from '../api';
 import { parseInterval } from '../utils/parseInterval';
 
 interface Props {
   task: Task | null;
+  households: Household[];
+  defaultHouseholdId?: string;
   onSave: () => Promise<void>;
   onClose: () => void;
 }
@@ -14,9 +16,12 @@ function formatIntervalForInput(hours: number): string {
   return `${hours}h`;
 }
 
-export function TaskForm({ task, onSave, onClose }: Props) {
+export function TaskForm({ task, households, defaultHouseholdId, onSave, onClose }: Props) {
   const [name, setName] = useState(task?.name ?? '');
   const [intervalInput, setIntervalInput] = useState(task ? formatIntervalForInput(task.intervalHours) : '24h');
+  const [householdId, setHouseholdId] = useState<string | undefined>(
+    task?.householdId ?? defaultHouseholdId ?? undefined,
+  );
   const [loading, setLoading] = useState(false);
   const [intervalError, setIntervalError] = useState('');
 
@@ -33,7 +38,7 @@ export function TaskForm({ task, onSave, onClose }: Props) {
       if (task) {
         await api.updateTask(task.id, { name, intervalHours: parsed.hours });
       } else {
-        await api.createTask({ name, intervalHours: parsed.hours });
+        await api.createTask({ name, intervalHours: parsed.hours, householdId });
       }
       await onSave();
     } finally {
@@ -59,7 +64,7 @@ export function TaskForm({ task, onSave, onClose }: Props) {
               style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
             />
           </div>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', marginBottom: 4 }}>Interval</label>
             <input
               type="text"
@@ -72,6 +77,21 @@ export function TaskForm({ task, onSave, onClose }: Props) {
             {intervalError && <small style={{ color: '#dc2626' }}>{intervalError}</small>}
             <small style={{ color: '#6b7280', display: 'block', marginTop: 2 }}>h = hours · d = days · m = months</small>
           </div>
+          {!task && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Household (optional)</label>
+              <select
+                value={householdId ?? ''}
+                onChange={e => setHouseholdId(e.target.value || undefined)}
+                style={{ width: '100%', padding: '6px 10px', boxSizing: 'border-box' }}
+              >
+                <option value="">Personal task</option>
+                {households.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="submit" disabled={loading}>
               {loading ? 'Saving…' : task ? 'Save' : 'Create'}
