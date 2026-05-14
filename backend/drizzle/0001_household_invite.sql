@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS "invite_tokens" (
 ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "household_id" uuid;
 --> statement-breakpoint
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'households_members_household_id_fk') THEN
-    ALTER TABLE "household_members" ADD CONSTRAINT "households_members_household_id_fk" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE cascade;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'household_members_household_id_fk') THEN
+    ALTER TABLE "household_members" ADD CONSTRAINT "household_members_household_id_fk" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE cascade;
   END IF;
 END $$;
 --> statement-breakpoint
