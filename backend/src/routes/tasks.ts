@@ -41,6 +41,14 @@ router.post('/', async (req, res) => {
     res.status(400).json({ error: 'name (string), intervalHours (number), and shared (boolean) are required' });
     return;
   }
+  if (!name.trim()) {
+    res.status(400).json({ error: 'name must not be empty' });
+    return;
+  }
+  if (intervalHours <= 0 || !isFinite(intervalHours)) {
+    res.status(400).json({ error: 'intervalHours must be a positive finite number' });
+    return;
+  }
   const now = new Date();
   const nextDeadline = computeNextDeadline(now, intervalHours);
 
@@ -68,10 +76,25 @@ router.patch('/:id', async (req, res) => {
     shared?: boolean;
   };
 
+  if (name !== undefined && typeof name !== 'string') {
+    res.status(400).json({ error: 'name must be a string' }); return;
+  }
+  if (intervalHours !== undefined && (typeof intervalHours !== 'number' || intervalHours <= 0 || !isFinite(intervalHours))) {
+    res.status(400).json({ error: 'intervalHours must be a positive finite number' }); return;
+  }
+  if (shared !== undefined && typeof shared !== 'boolean') {
+    res.status(400).json({ error: 'shared must be a boolean' }); return;
+  }
+
   const updates: Partial<typeof tasks.$inferInsert> = {};
   if (name !== undefined) updates.name = name;
   if (intervalHours !== undefined) updates.intervalHours = intervalHours;
   if (shared !== undefined) updates.ownerId = shared ? null : userId;
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: 'No valid fields to update' });
+    return;
+  }
 
   const [updated] = await db
     .update(tasks)
@@ -108,17 +131,19 @@ router.post('/:id/complete', async (req, res) => {
   }
 
   const now = new Date();
-  await db.insert(completions).values({ taskId: task.id, userId, completedAt: now });
+  let updated: typeof tasks.$inferSelect;
+  await db.transaction(async (tx) => {
+    await tx.insert(completions).values({ taskId: task.id, userId, completedAt: now });
+    const nextDeadline = computeNextDeadline(now, task.intervalHours);
+    [updated!] = await tx
+      .update(tasks)
+      .set({ nextDeadline })
+      .where(eq(tasks.id, task.id))
+      .returning();
+  });
 
-  const nextDeadline = computeNextDeadline(now, task.intervalHours);
-  const [updated] = await db
-    .update(tasks)
-    .set({ nextDeadline })
-    .where(eq(tasks.id, task.id))
-    .returning();
-
-  scheduleTask(updated.id, updated.name, updated.ownerId, updated.nextDeadline);
-  res.json(formatTask(updated));
+  scheduleTask(updated!.id, updated!.name, updated!.ownerId, updated!.nextDeadline);
+  res.json(formatTask(updated!));
 });
 
 export default router;
