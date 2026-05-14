@@ -2,11 +2,110 @@
 
 ---
 
-## #1 — Natural interval input on task creation
+## Open
+
+_(no open issues)_
+
+---
+
+## Resolved
+
+### #4 — Navigating directly to `/invite/:token` shows raw JSON instead of the invite page
 
 **Status:** Closed
 
-### Description
+#### Description
+
+When a user opens an invite link directly in the browser (e.g. `http://localhost:5173/invite/xK9mP2qR4nJw`), they see a raw JSON response (`{ householdName, expiresAt }`) instead of the `InvitePage` UI.
+
+#### Steps to Reproduce
+
+1. Generate an invite link from the Households page.
+2. Open the link directly in a browser tab.
+3. Observe: the browser displays raw JSON, not the invite page.
+
+#### Expected Behaviour
+
+The browser renders the `InvitePage` component, showing the household name, expiry, and a "Join Household" button.
+
+#### Acceptance Criteria
+
+**Given** I have a valid invite link,  
+**When** I navigate to `/invite/:token` in the browser,  
+**Then** I see the invite page UI — not raw JSON.
+
+#### Root Cause
+
+Vite proxy `/invite` intercepted direct browser navigation. Fixed by prefixing all backend routes with `/api` and updating the proxy to a single `/api` rule.
+
+---
+
+### #3 — Household picker in New Task form shows no households
+
+**Status:** Closed
+
+#### Description
+
+When creating a new task, the Household dropdown only shows "Personal task" — no households appear as options, even when the user is an active member of one or more households.
+
+#### Steps to Reproduce
+
+1. Log in as a user who is an active member of at least one household.
+2. On the Dashboard, click **+ New Task**.
+3. Open the **Household** dropdown.
+4. Observe: only "Personal task" is listed; no household options are shown.
+
+#### Expected Behaviour
+
+The dropdown lists all households the user is an active member of, in addition to the "Personal task" option.
+
+#### Acceptance Criteria
+
+**Given** I am logged in and an active member of a household,  
+**When** I open the New Task form and click the Household dropdown,  
+**Then** I see "Personal task" and each of my active households as selectable options.
+
+#### Root Cause
+
+`/households` was not listed in the Vite dev proxy config (`vite.config.ts`), so the browser request never reached the backend. Fixed by adding `/households` and `/invite` to the proxy.
+
+---
+
+### #2 — Clicking "Households" on the Dashboard redirects to login
+
+**Status:** Closed
+
+#### Description
+
+When a logged-in user is on the Dashboard and clicks the "Households" button, they are unexpectedly redirected to the login screen instead of seeing the Households page.
+
+#### Steps to Reproduce
+
+1. Log in as any user.
+2. On the Dashboard, click the **Households** button (top-right area).
+3. Observe: browser navigates to `/login` instead of `/households`.
+
+#### Expected Behaviour
+
+The user is taken to `/households` and sees the Households page (create household, list, manage members).
+
+#### Acceptance Criteria
+
+**Given** I am logged in and on the Dashboard,  
+**When** I click the Households button,  
+**Then** I am taken to `/households` and the Households page loads without error.
+
+#### Root Cause
+
+`/households` and `/invite` were missing from the Vite dev proxy config (`vite.config.ts`). Requests to these routes were not forwarded to the backend, causing `api.getHouseholds()` to fail, which triggered the redirect to login. Fixed by adding both routes to the proxy.
+
+---
+
+### #1 — Natural interval input on task creation
+
+**Status:** Closed
+
+#### Description
 
 The task creation form currently requires a raw number of hours (e.g. `24`). Users should be able to type human-friendly shorthand instead.
 
@@ -17,7 +116,7 @@ Supported formats:
 
 No minute-level granularity (e.g. `30min`, `45m` meaning minutes) — minimum unit is hours.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
 **Given** I am on the New Task form and I focus the interval field,  
 **When** I type `2h`,  
@@ -43,7 +142,7 @@ No minute-level granularity (e.g. `30min`, `45m` meaning minutes) — minimum un
 **When** I type a minute-level shorthand (e.g. `30min`),  
 **Then** the field shows a validation error — minute-level intervals are not supported.
 
-### Notes
+#### Notes
 
 - Parsing happens client-side in `TaskForm.tsx` before the value is sent to the API.
 - The API continues to receive `intervalHours` as a plain `number` — no backend changes needed.

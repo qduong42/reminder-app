@@ -33,9 +33,9 @@ beforeAll(async () => {
   userAId = a.id;
   userBId = b.id;
 
-  const resA = await request(app).post('/auth/login').send({ name: '_hh_user_a_', password: 'pass' });
+  const resA = await request(app).post('/api/auth/login').send({ name: '_hh_user_a_', password: 'pass' });
   cookieA = (resA.headers['set-cookie'] as unknown as string[])[0];
-  const resB = await request(app).post('/auth/login').send({ name: '_hh_user_b_', password: 'pass' });
+  const resB = await request(app).post('/api/auth/login').send({ name: '_hh_user_b_', password: 'pass' });
   cookieB = (resB.headers['set-cookie'] as unknown as string[])[0];
 });
 
@@ -50,7 +50,7 @@ afterAll(async () => {
 describe('POST /households', () => {
   it('creates a household and adds creator as active member', async () => {
     const res = await request(app)
-      .post('/households')
+      .post('/api/households')
       .set('Cookie', cookieA)
       .send({ name: 'Test Household' })
       .expect(201);
@@ -67,7 +67,7 @@ describe('POST /households', () => {
   });
 
   it('returns 400 for empty name', async () => {
-    await request(app).post('/households').set('Cookie', cookieA).send({ name: '' }).expect(400);
+    await request(app).post('/api/households').set('Cookie', cookieA).send({ name: '' }).expect(400);
   });
 });
 
@@ -76,10 +76,10 @@ describe('GET /households', () => {
     const [hh] = await db.insert(households).values({ name: 'My House' }).returning();
     await db.insert(householdMembers).values({ householdId: hh.id, userId: userAId, status: 'active' });
 
-    const resA = await request(app).get('/households').set('Cookie', cookieA).expect(200);
+    const resA = await request(app).get('/api/households').set('Cookie', cookieA).expect(200);
     expect(resA.body.some((h: { id: string }) => h.id === hh.id)).toBe(true);
 
-    const resB = await request(app).get('/households').set('Cookie', cookieB).expect(200);
+    const resB = await request(app).get('/api/households').set('Cookie', cookieB).expect(200);
     expect(resB.body.some((h: { id: string }) => h.id === hh.id)).toBe(false);
 
     await db.delete(householdMembers).where(eq(householdMembers.householdId, hh.id));
@@ -92,7 +92,7 @@ describe('GET /households/:id/members', () => {
     const [hh] = await db.insert(households).values({ name: 'Private' }).returning();
     await db.insert(householdMembers).values({ householdId: hh.id, userId: userAId, status: 'active' });
 
-    await request(app).get(`/households/${hh.id}/members`).set('Cookie', cookieB).expect(403);
+    await request(app).get(`/api/households/${hh.id}/members`).set('Cookie', cookieB).expect(403);
 
     await db.delete(householdMembers).where(eq(householdMembers.householdId, hh.id));
     await db.delete(households).where(eq(households.id, hh.id));
@@ -105,7 +105,7 @@ describe('GET /households/:id/members', () => {
       { householdId: hh.id, userId: userBId, status: 'pending' },
     ]);
 
-    const res = await request(app).get(`/households/${hh.id}/members`).set('Cookie', cookieA).expect(200);
+    const res = await request(app).get(`/api/households/${hh.id}/members`).set('Cookie', cookieA).expect(200);
     expect(res.body).toHaveLength(2);
     expect(res.body.some((m: { status: string }) => m.status === 'pending')).toBe(true);
 
@@ -123,7 +123,7 @@ describe('POST /households/:id/members/:userId/accept', () => {
     ]);
 
     await request(app)
-      .post(`/households/${hh.id}/members/${userBId}/accept`)
+      .post(`/api/households/${hh.id}/members/${userBId}/accept`)
       .set('Cookie', cookieA)
       .expect(200);
 
@@ -145,7 +145,7 @@ describe('DELETE /households/:id/members/:userId', () => {
     ]);
 
     await request(app)
-      .delete(`/households/${hh.id}/members/${userBId}`)
+      .delete(`/api/households/${hh.id}/members/${userBId}`)
       .set('Cookie', cookieA)
       .expect(204);
 
@@ -161,7 +161,7 @@ describe('DELETE /households/:id/members/:userId', () => {
     await db.insert(householdMembers).values({ householdId: hh.id, userId: userAId, status: 'active' });
 
     await request(app)
-      .delete(`/households/${hh.id}/members/${userAId}`)
+      .delete(`/api/households/${hh.id}/members/${userAId}`)
       .set('Cookie', cookieA)
       .expect(204);
 
@@ -176,17 +176,17 @@ describe('Invite flow', () => {
     await db.insert(householdMembers).values({ householdId: hh.id, userId: userAId, status: 'active' });
 
     const inviteRes = await request(app)
-      .post(`/households/${hh.id}/invites`)
+      .post(`/api/households/${hh.id}/invites`)
       .set('Cookie', cookieA)
       .expect(201);
     const { url } = inviteRes.body as { url: string };
     const token = url.split('/invite/')[1];
 
-    const infoRes = await request(app).get(`/invite/${token}`).expect(200);
+    const infoRes = await request(app).get(`/api/invite/${token}`).expect(200);
     expect(infoRes.body.householdName).toBe('InviteHouse');
     expect(infoRes.body.expiresAt).toBeDefined();
 
-    await request(app).post(`/invite/${token}/join`).set('Cookie', cookieB).expect(200);
+    await request(app).post(`/api/invite/${token}/join`).set('Cookie', cookieB).expect(200);
 
     const [member] = await db.select().from(householdMembers)
       .where(and(eq(householdMembers.householdId, hh.id), eq(householdMembers.userId, userBId)));
@@ -196,7 +196,7 @@ describe('Invite flow', () => {
     expect(tokenRows).toHaveLength(0);
 
     await request(app)
-      .post(`/households/${hh.id}/members/${userBId}/accept`)
+      .post(`/api/households/${hh.id}/members/${userBId}/accept`)
       .set('Cookie', cookieA)
       .expect(200);
 
@@ -220,7 +220,7 @@ describe('Invite flow', () => {
       expiresAt: new Date(Date.now() - 1000),
     });
 
-    await request(app).get(`/invite/${expiredToken}`).expect(410);
+    await request(app).get(`/api/invite/${expiredToken}`).expect(410);
 
     await db.delete(householdMembers).where(eq(householdMembers.householdId, hh.id));
     await db.delete(households).where(eq(households.id, hh.id));
@@ -241,7 +241,7 @@ describe('Invite flow', () => {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
-    await request(app).post(`/invite/${validToken}/join`).set('Cookie', cookieB).expect(409);
+    await request(app).post(`/api/invite/${validToken}/join`).set('Cookie', cookieB).expect(409);
 
     await db.delete(inviteTokens).where(eq(inviteTokens.token, validToken));
     await db.delete(householdMembers).where(eq(householdMembers.householdId, hh.id));

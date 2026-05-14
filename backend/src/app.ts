@@ -17,11 +17,11 @@ export function createApp() {
     credentials: true,
   }));
 
-  app.use('/auth', authRouter);
-  app.use('/tasks', tasksRouter);
-  app.use('/push', pushRouter);
-  app.use('/households', householdsRouter);
-  app.use('/invite', inviteRouter);
+  app.use('/api/auth', authRouter);
+  app.use('/api/tasks', tasksRouter);
+  app.use('/api/push', pushRouter);
+  app.use('/api/households', householdsRouter);
+  app.use('/api/invite', inviteRouter);
 
   if (process.env.NODE_ENV === 'production') {
     const frontendDist = path.join(__dirname, '../frontend-dist');

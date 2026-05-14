@@ -44,15 +44,15 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   login: (name: string, password: string, rememberMe: boolean) =>
-    apiFetch<User>('/auth/login', {
+    apiFetch<User>('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, password, rememberMe }),
     }),
 
-  logout: () => apiFetch<void>('/auth/logout', { method: 'POST' }),
+  logout: () => apiFetch<void>('/api/auth/logout', { method: 'POST' }),
 
-  me: () => apiFetch<User>('/auth/me'),
+  me: () => apiFetch<User>('/api/auth/me'),
 
   getTasks: (params?: { scope?: 'personal'; householdId?: string }) => {
     const qs = params?.scope
@@ -60,58 +60,58 @@ export const api = {
       : params?.householdId
       ? `?householdId=${params.householdId}`
       : '';
-    return apiFetch<Task[]>(`/tasks${qs}`);
+    return apiFetch<Task[]>(`/api/tasks${qs}`);
   },
 
   createTask: (data: { name: string; intervalHours: number; householdId?: string }) =>
-    apiFetch<Task>('/tasks', {
+    apiFetch<Task>('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
 
   updateTask: (id: string, data: Partial<{ name: string; intervalHours: number }>) =>
-    apiFetch<Task>(`/tasks/${id}`, {
+    apiFetch<Task>(`/api/tasks/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
 
-  deleteTask: (id: string) => apiFetch<void>(`/tasks/${id}`, { method: 'DELETE' }),
+  deleteTask: (id: string) => apiFetch<void>(`/api/tasks/${id}`, { method: 'DELETE' }),
 
-  completeTask: (id: string) => apiFetch<Task>(`/tasks/${id}/complete`, { method: 'POST' }),
+  completeTask: (id: string) => apiFetch<Task>(`/api/tasks/${id}/complete`, { method: 'POST' }),
 
   subscribe: (subscription: PushSubscriptionJSON) =>
-    apiFetch<void>('/push/subscribe', {
+    apiFetch<void>('/api/push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(subscription),
     }),
 
-  getHouseholds: () => apiFetch<Household[]>('/households'),
+  getHouseholds: () => apiFetch<Household[]>('/api/households'),
 
   createHousehold: (name: string) =>
-    apiFetch<Household>('/households', {
+    apiFetch<Household>('/api/households', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     }),
 
-  deleteHousehold: (id: string) => apiFetch<void>(`/households/${id}`, { method: 'DELETE' }),
+  deleteHousehold: (id: string) => apiFetch<void>(`/api/households/${id}`, { method: 'DELETE' }),
 
-  getMembers: (householdId: string) => apiFetch<Member[]>(`/households/${householdId}/members`),
+  getMembers: (householdId: string) => apiFetch<Member[]>(`/api/households/${householdId}/members`),
 
   generateInvite: (householdId: string) =>
-    apiFetch<{ url: string }>(`/households/${householdId}/invites`, { method: 'POST' }),
+    apiFetch<{ url: string }>(`/api/households/${householdId}/invites`, { method: 'POST' }),
 
   acceptMember: (householdId: string, userId: string) =>
-    apiFetch<Member>(`/households/${householdId}/members/${userId}/accept`, { method: 'POST' }),
+    apiFetch<Member>(`/api/households/${householdId}/members/${userId}/accept`, { method: 'POST' }),
 
   removeMember: (householdId: string, userId: string) =>
-    apiFetch<void>(`/households/${householdId}/members/${userId}`, { method: 'DELETE' }),
+    apiFetch<void>(`/api/households/${householdId}/members/${userId}`, { method: 'DELETE' }),
 
-  getInviteInfo: (token: string) => apiFetch<InviteInfo>(`/invite/${token}`),
+  getInviteInfo: (token: string) => apiFetch<InviteInfo>(`/api/invite/${token}`),
 
   joinViaInvite: (token: string) =>
-    apiFetch<{ status: string }>(`/invite/${token}/join`, { method: 'POST' }),
+    apiFetch<{ status: string }>(`/api/invite/${token}/join`, { method: 'POST' }),
 };

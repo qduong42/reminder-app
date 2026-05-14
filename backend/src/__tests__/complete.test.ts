@@ -29,7 +29,7 @@ beforeAll(async () => {
   userId = user.id;
 
   const loginRes = await request(app)
-    .post('/auth/login')
+    .post('/api/auth/login')
     .send({ name: '_test_user_', password: 'testpass' });
   authCookie = (loginRes.headers['set-cookie'] as unknown as string[])[0];
 
@@ -53,7 +53,7 @@ describe('POST /tasks/:id/complete', () => {
     const beforeComplete = new Date();
 
     const res = await request(app)
-      .post(`/tasks/${taskId}/complete`)
+      .post(`/api/tasks/${taskId}/complete`)
       .set('Cookie', authCookie)
       .expect(200);
 
@@ -85,7 +85,7 @@ describe('POST /tasks/:id/complete', () => {
     }).returning();
 
     await request(app)
-      .post(`/tasks/${personalTask.id}/complete`)
+      .post(`/api/tasks/${personalTask.id}/complete`)
       .set('Cookie', authCookie)
       .expect(403);
 
