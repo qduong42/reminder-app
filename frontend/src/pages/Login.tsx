@@ -16,7 +16,8 @@ export function Login() {
     setLoading(true);
     try {
       await api.login(name, password, rememberMe);
-      navigate('/');
+      const params = new URLSearchParams(window.location.search);
+      navigate(params.get('returnTo') || '/');
     } catch {
       setError('Invalid username or password');
     } finally {

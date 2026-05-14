@@ -16,14 +16,13 @@ function formatIntervalForInput(hours: number): string {
 
 export function TaskForm({ task, onSave, onClose }: Props) {
   const [name, setName] = useState(task?.name ?? '');
-  const [intervalHours, setIntervalHours] = useState(task ? formatIntervalForInput(task.intervalHours) : '24h');
-  const [shared, setShared] = useState(task ? task.ownerId === null : true);
+  const [intervalInput, setIntervalInput] = useState(task ? formatIntervalForInput(task.intervalHours) : '24h');
   const [loading, setLoading] = useState(false);
   const [intervalError, setIntervalError] = useState('');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const parsed = parseInterval(intervalHours);
+    const parsed = parseInterval(intervalInput);
     if (!parsed.ok) {
       setIntervalError(parsed.error);
       return;
@@ -32,9 +31,9 @@ export function TaskForm({ task, onSave, onClose }: Props) {
     setLoading(true);
     try {
       if (task) {
-        await api.updateTask(task.id, { name, intervalHours: parsed.hours, shared });
+        await api.updateTask(task.id, { name, intervalHours: parsed.hours });
       } else {
-        await api.createTask({ name, intervalHours: parsed.hours, shared });
+        await api.createTask({ name, intervalHours: parsed.hours });
       }
       await onSave();
     } finally {
@@ -60,29 +59,18 @@ export function TaskForm({ task, onSave, onClose }: Props) {
               style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', marginBottom: 4 }}>Interval</label>
             <input
               type="text"
-              value={intervalHours}
-              onChange={e => { setIntervalHours(e.target.value); setIntervalError(''); }}
+              value={intervalInput}
+              onChange={e => { setIntervalInput(e.target.value); setIntervalError(''); }}
               placeholder="e.g. 2h, 3d, 1m"
               required
               style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
             />
             {intervalError && <small style={{ color: '#dc2626' }}>{intervalError}</small>}
             <small style={{ color: '#6b7280', display: 'block', marginTop: 2 }}>h = hours · d = days · m = months</small>
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label>
-              <input
-                type="checkbox"
-                checked={shared}
-                onChange={e => setShared(e.target.checked)}
-                style={{ marginRight: 8 }}
-              />
-              Shared (visible to all household members)
-            </label>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="submit" disabled={loading}>

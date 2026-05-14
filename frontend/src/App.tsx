@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { InvitePage } from './pages/InvitePage';
+import { HouseholdManager } from './pages/HouseholdManager';
 import { api } from './api';
 
 function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
@@ -35,6 +37,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<Dashboard />} />
+      <Route path="/invite/:token" element={<InvitePage />} />
+      <Route path="/households" element={<HouseholdManager />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
