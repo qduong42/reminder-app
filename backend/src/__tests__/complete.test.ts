@@ -25,7 +25,7 @@ beforeAll(async () => {
   await db.delete(users).where(eq(users.name, '_test_user_'));
 
   const passwordHash = await bcrypt.hash('testpass', 10);
-  const [user] = await db.insert(users).values({ name: '_test_user_', passwordHash }).returning();
+  const [user] = await db.insert(users).values({ name: '_test_user_', passwordHash, email: '_test_user_@test.local' }).returning();
   userId = user.id;
 
   const loginRes = await request(app)
@@ -76,7 +76,7 @@ describe('POST /tasks/:id/complete', () => {
 
   it('rejects completion of another user personal task with 403', async () => {
     const hash2 = await bcrypt.hash('pass2', 10);
-    const [user2] = await db.insert(users).values({ name: '_test_user_2_', passwordHash: hash2 }).returning();
+    const [user2] = await db.insert(users).values({ name: '_test_user_2_', passwordHash: hash2, email: '_test_user_2_@test.local' }).returning();
     const [personalTask] = await db.insert(tasks).values({
       name: 'Personal Task User2',
       intervalHours: 12,
