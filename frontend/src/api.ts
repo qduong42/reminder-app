@@ -125,7 +125,7 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  updateTask: (id: string, data: Partial<{ name: string; intervalHours: number }>) =>
+  updateTask: (id: string, data: Partial<{ name: string; intervalHours: number; householdId: string | null }>) =>
     apiFetch<Task>(`/api/tasks/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
