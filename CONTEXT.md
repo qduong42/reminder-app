@@ -4,6 +4,18 @@ A shared household task tracker where users can manage recurring tasks alone or 
 
 ## Language
 
+**User**:
+A registered account identified by a unique username and a unique email address. Either can be used to log in.
+_Avoid_: Account, profile, person
+
+**Username**:
+A unique, human-chosen display name used to identify a user within the app and as one of two valid login identifiers.
+_Avoid_: Name, handle, login name
+
+**Email**:
+A unique address stored per user, used as a second login identifier and as the delivery target for password reset links. Not verified on registration — users are active immediately.
+_Avoid_: Email address (just "email" is canonical)
+
 **Household**:
 A named group of users who share a set of tasks.
 _Avoid_: Group, team, family, org
@@ -75,6 +87,22 @@ _Avoid_: Task filter, task view
 | List household members | ❌ | ✅ |
 | Generate invite token | ❌ | ✅ |
 | Accept/remove members | ❌ | ✅ |
+
+## Account flows
+
+**Registration**: Open — any visitor can create an account with a username, email, and password. Active immediately, no email verification required. Entry point: `/register` page, linked from the login page ("Don't have an account? Sign up").
+
+**Login identifier**: Either username or email, plus password.
+
+**Password Reset**: User submits their email → receives a time-limited link (valid 1 hour) → sets a new password → link is invalidated (single-use token, hard-deleted on use).
+
+**Account Deletion**: Hard delete — personal tasks deleted, household memberships removed (triggering household auto-delete if they are the last active member). All foreign keys to the user are CASCADE deleted or SET NULL per existing schema rules.
+
+**Profile Updates**: Users can change their username and email after registration. Both changes require the current password to confirm.
+
+**Settings Page**: Covers identity only — change username, change email, change password, delete account. Household management stays on the Households page. Accessible via a "Settings" button in the Dashboard header alongside "Households" and "Log out".
+
+**Password Policy**: Minimum 8 characters. Rejected if `zxcvbn` score < 2 (catches common passwords, keyboard patterns, dictionary words). Enforced on backend; real-time feedback shown on frontend.
 
 ## Flagged ambiguities
 

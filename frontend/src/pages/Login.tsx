@@ -6,6 +6,7 @@ export function Login() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,50 +27,79 @@ export function Login() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '80px auto', padding: '0 16px', fontFamily: 'sans-serif' }}>
-      <h1>Task Tracker</h1>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: 'block', marginBottom: 4 }}>Username</label>
-          <input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-            autoComplete="username"
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: 'block', marginBottom: 4 }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label>
+    <div style={{
+      minHeight: '100dvh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '16px',
+      boxSizing: 'border-box',
+      fontFamily: 'sans-serif',
+    }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <h1 style={{ marginBottom: 24, fontSize: 24 }}>Task Tracker</h1>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Username</label>
             <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={e => setRememberMe(e.target.checked)}
-              style={{ marginRight: 8 }}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              autoComplete="username"
+              style={{ width: '100%', padding: '12px', boxSizing: 'border-box', fontSize: 16, borderRadius: 6, border: '1px solid #d1d5db' }}
             />
-            Remember me (30 days)
-          </label>
-        </div>
-        {error && <p style={{ color: 'red', margin: '0 0 12px' }}>{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ width: '100%', padding: '10px', cursor: loading ? 'not-allowed' : 'pointer' }}
-        >
-          {loading ? 'Logging in…' : 'Log in'}
-        </button>
-      </form>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                style={{ width: '100%', padding: '12px 44px 12px 12px', boxSizing: 'border-box', fontSize: 16, borderRadius: 6, border: '1px solid #d1d5db' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                style={{
+                  position: 'absolute', right: 0, top: 0, bottom: 0,
+                  width: 44, background: 'none', border: 'none',
+                  cursor: 'pointer', fontSize: 16, color: '#6b7280',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '🙈' : '👁'}
+              </button>
+            </div>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                style={{ width: 18, height: 18 }}
+              />
+              Remember me (30 days)
+            </label>
+          </div>
+          {error && <p style={{ color: '#dc2626', margin: '0 0 12px' }}>{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%', padding: '14px', fontSize: 16, borderRadius: 6,
+              cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
+              background: loading ? '#9ca3af' : '#2563eb', color: 'white', fontWeight: 600,
+            }}
+          >
+            {loading ? 'Logging in…' : 'Log in'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

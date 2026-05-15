@@ -4,7 +4,30 @@
 
 ## Open
 
-_(no open issues)_
+### #5 — Household task card shows "Personal" instead of the household name
+
+**Status:** Open
+
+#### Description
+
+When a task is created under a household, the task card displays it as a personal task rather than showing the household it belongs to.
+
+#### Steps to Reproduce
+
+1. Log in as a user who is an active member of a household.
+2. Create a new task and assign it to a household.
+3. View the task on the Dashboard.
+4. Observe: the task card does not show the household name — it appears as if it is a personal task.
+
+#### Expected Behaviour
+
+The task card shows the household name (e.g. "Due: 18 May · My Household") so the user knows which household the task belongs to.
+
+#### Acceptance Criteria
+
+**Given** I am an active member of a household and I have created a task assigned to that household,  
+**When** I view the task on the Dashboard,  
+**Then** the task card displays the household name alongside the due date.
 
 ---
 

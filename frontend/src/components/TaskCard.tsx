@@ -2,6 +2,7 @@ import { Task } from '../api';
 
 interface Props {
   task: Task;
+  householdName?: string;
   onComplete: (id: string) => Promise<void>;
   onEdit: () => void;
   onDelete: (id: string) => Promise<void>;
@@ -24,7 +25,7 @@ const URGENCY_COLOR: Record<Task['urgency'], string> = {
   'on-track': '#16a34a',
 };
 
-export function TaskCard({ task, onComplete, onEdit, onDelete }: Props) {
+export function TaskCard({ task, householdName, onComplete, onEdit, onDelete }: Props) {
   const color = URGENCY_COLOR[task.urgency];
   return (
     <div style={{
@@ -40,7 +41,7 @@ export function TaskCard({ task, onComplete, onEdit, onDelete }: Props) {
       </div>
       <div style={{ color: '#4b5563', fontSize: 13, margin: '4px 0 10px' }}>
         Due: {formatDeadline(task.nextDeadline)}
-        &nbsp;·&nbsp;{task.ownerId ? 'personal' : 'shared'}
+        &nbsp;·&nbsp;{task.ownerId ? 'personal' : (householdName ?? 'shared')}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => onComplete(task.id)}>Mark Done</button>
