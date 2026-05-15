@@ -3,7 +3,7 @@ import { eq, and, ne, isNull, inArray } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import zxcvbn from 'zxcvbn';
 import { db } from '../db';
-import { users, households, householdMembers, completions, tasks, passwordResetTokens } from '../db/schema';
+import { users, households, householdMembers, completions, tasks, passwordResetTokens, inviteTokens } from '../db/schema';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -28,6 +28,17 @@ router.get('/', async (req, res) => {
 router.patch('/identity', async (req, res) => {
   const { userId } = req as unknown as AuthRequest;
   const { username, email, currentPassword } = req.body as { username: string; email: string; currentPassword: string };
+
+  // Input validation
+  if (!username || !/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+    res.status(400).json({ error: 'Invalid username: must be 3–30 characters and contain only letters, numbers, underscores, or hyphens' });
+    return;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: 'Invalid email address' });
+    return;
+  }
+
   try {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
@@ -122,15 +133,19 @@ router.delete('/', async (req, res) => {
       // Step 4: delete household memberships
       await tx.delete(householdMembers).where(eq(householdMembers.userId, userId));
 
-      // Step 5: delete sole-member households
+      // Step 5: delete tasks belonging to sole-member households, then the households
       if (householdIds.length > 0) {
+        await tx.delete(tasks).where(inArray(tasks.householdId, householdIds));
         await tx.delete(households).where(inArray(households.id, householdIds));
       }
 
-      // Step 6: delete password reset tokens
+      // Step 6: delete invite tokens created by this user
+      await tx.delete(inviteTokens).where(eq(inviteTokens.createdById, userId));
+
+      // Step 7: delete password reset tokens
       await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
 
-      // Step 7: delete user
+      // Step 8: delete user
       await tx.delete(users).where(eq(users.id, userId));
     });
 
