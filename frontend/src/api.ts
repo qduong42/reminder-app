@@ -84,7 +84,7 @@ export const api = {
 
   getAccount: () => apiFetch<{ id: string; username: string; email: string }>('/api/account'),
 
-  updateIdentity: (data: { username: string; email: string; currentPassword: string }) =>
+  updateIdentity: (data: { username: string; email: string }) =>
     apiFetch<{ id: string; username: string; email: string }>('/api/account/identity', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

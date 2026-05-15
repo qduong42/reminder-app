@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
 // PATCH /account/identity
 router.patch('/identity', async (req, res) => {
   const { userId } = req as unknown as AuthRequest;
-  const { username, email, currentPassword } = req.body as { username: string; email: string; currentPassword: string };
+  const { username, email } = req.body as { username: string; email: string };
 
   // Input validation
   if (!username || !/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
@@ -42,9 +42,6 @@ router.patch('/identity', async (req, res) => {
   try {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
-
-    const passwordValid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!passwordValid) { res.status(403).json({ error: 'Invalid current password' }); return; }
 
     // Check username uniqueness (excluding current user)
     if (username !== user.name) {

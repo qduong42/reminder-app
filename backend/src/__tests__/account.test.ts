@@ -317,7 +317,6 @@ describe('PATCH /api/account/identity', () => {
       .send({
         username: `${P}main_updated`,
         email: `${P}main_updated@test.local`,
-        currentPassword: STRONG_PASSWORD,
       })
       .expect(200);
 
@@ -333,18 +332,6 @@ describe('PATCH /api/account/identity', () => {
     mainCookie = (loginRes.headers['set-cookie'] as unknown as string[])[0];
   });
 
-  it('wrong current password → 403', async () => {
-    await request(app)
-      .patch('/api/account/identity')
-      .set('Cookie', mainCookie)
-      .send({
-        username: `${P}main`,
-        email: `${P}main@test.local`,
-        currentPassword: 'wrongpassword',
-      })
-      .expect(403);
-  });
-
   it('duplicate username → 409', async () => {
     await request(app)
       .patch('/api/account/identity')
@@ -352,7 +339,6 @@ describe('PATCH /api/account/identity', () => {
       .send({
         username: `${P}other`,
         email: `${P}main@test.local`,
-        currentPassword: STRONG_PASSWORD,
       })
       .expect(409);
   });
@@ -364,7 +350,6 @@ describe('PATCH /api/account/identity', () => {
       .send({
         username: `${P}main`,
         email: `${P}other@test.local`,
-        currentPassword: STRONG_PASSWORD,
       })
       .expect(409);
   });

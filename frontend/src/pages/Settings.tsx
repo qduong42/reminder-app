@@ -64,13 +64,13 @@ export function Settings() {
   // Identity section state
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [identityCurrentPassword, setIdentityCurrentPassword] = useState('');
+  const [originalUsername, setOriginalUsername] = useState('');
+  const [originalEmail, setOriginalEmail] = useState('');
   const [identityLoading, setIdentityLoading] = useState(false);
   const [identitySuccess, setIdentitySuccess] = useState('');
   const [identityGeneralError, setIdentityGeneralError] = useState('');
   const [identityUsernameError, setIdentityUsernameError] = useState('');
   const [identityEmailError, setIdentityEmailError] = useState('');
-  const [identityPasswordError, setIdentityPasswordError] = useState('');
 
   // Password section state
   const [pwdCurrent, setPwdCurrent] = useState('');
@@ -90,11 +90,15 @@ export function Settings() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  const hasIdentityChanges = username !== originalUsername || email !== originalEmail;
+
   useEffect(() => {
     api.getAccount()
       .then(account => {
         setUsername(account.username);
         setEmail(account.email);
+        setOriginalUsername(account.username);
+        setOriginalEmail(account.email);
       })
       .catch(err => {
         if (err instanceof ApiError && err.status === 401) {
@@ -108,28 +112,22 @@ export function Settings() {
     setIdentityGeneralError('');
     setIdentityUsernameError('');
     setIdentityEmailError('');
-    setIdentityPasswordError('');
     setIdentitySuccess('');
     setIdentityLoading(true);
     try {
-      const updated = await api.updateIdentity({ username, email, currentPassword: identityCurrentPassword });
+      const updated = await api.updateIdentity({ username, email });
       setUsername(updated.username);
       setEmail(updated.email);
-      setIdentityCurrentPassword('');
+      setOriginalUsername(updated.username);
+      setOriginalEmail(updated.email);
       setIdentitySuccess('Saved.');
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.status === 409) {
-          const body = err.body as { error?: string } | null;
-          if (body?.error === 'username_taken') {
-            setIdentityUsernameError('Username is already taken');
-          } else if (body?.error === 'email_taken') {
-            setIdentityEmailError('Email is already registered');
-          } else {
-            setIdentityGeneralError('Something went wrong');
-          }
-        } else if (err.status === 403) {
-          setIdentityPasswordError('Incorrect password');
+      if (err instanceof ApiError && err.status === 409) {
+        const body = err.body as { error?: string } | null;
+        if (body?.error === 'username_taken') {
+          setIdentityUsernameError('Username is already taken');
+        } else if (body?.error === 'email_taken') {
+          setIdentityEmailError('Email is already registered');
         } else {
           setIdentityGeneralError('Something went wrong');
         }
@@ -256,26 +254,13 @@ export function Settings() {
                 <p style={{ ...errorStyle, margin: '4px 0 0' }}>{identityEmailError}</p>
               )}
             </div>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Current Password</label>
-              <input
-                type="password"
-                value={identityCurrentPassword}
-                onChange={e => setIdentityCurrentPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                style={{
-                  ...inputStyle,
-                  borderColor: identityPasswordError ? '#dc2626' : '#d1d5db',
-                }}
-              />
-              {identityPasswordError && (
-                <p style={{ ...errorStyle, margin: '4px 0 0' }}>{identityPasswordError}</p>
-              )}
-            </div>
             {identityGeneralError && <p style={errorStyle}>{identityGeneralError}</p>}
             {identitySuccess && <p style={successStyle}>{identitySuccess}</p>}
-            <button type="submit" disabled={identityLoading} style={submitBtnStyle(identityLoading)}>
+            <button
+              type="submit"
+              disabled={identityLoading || !hasIdentityChanges}
+              style={submitBtnStyle(identityLoading || !hasIdentityChanges)}
+            >
               {identityLoading ? 'Saving…' : 'Save Changes'}
             </button>
           </form>
