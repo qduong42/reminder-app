@@ -21,10 +21,14 @@ export async function sendMail({
   subject: string;
   html: string;
 }): Promise<void> {
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to,
-    subject,
-    html,
-  });
+  try {
+    await transporter.sendMail({
+      from: SMTP_FROM,
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    throw new Error(`Failed to send email to ${to}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
