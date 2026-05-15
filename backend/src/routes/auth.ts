@@ -87,7 +87,7 @@ router.post('/register', async (req, res) => {
       password: string;
     };
 
-    if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+    if (typeof username !== 'string' || !/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
       res.status(400).json({ error: 'Invalid username' });
       return;
     }
