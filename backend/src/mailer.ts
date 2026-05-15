@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { createTransport } from 'nodemailer';
 
 const { SMTP_HOST, SMTP_PORT, SMTP_FROM } = process.env;
 
@@ -6,7 +6,7 @@ if (!SMTP_HOST || !SMTP_PORT || !SMTP_FROM) {
   throw new Error('Missing required SMTP environment variables: SMTP_HOST, SMTP_PORT, SMTP_FROM');
 }
 
-const transporter = nodemailer.createTransport({
+const transporter = createTransport({
   host: SMTP_HOST,
   port: parseInt(SMTP_PORT, 10),
   secure: false,
