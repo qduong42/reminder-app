@@ -1,10 +1,10 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../api';
 
 export function Login() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -16,11 +16,11 @@ export function Login() {
     setError('');
     setLoading(true);
     try {
-      await api.login(name, password, rememberMe);
+      await api.login(usernameOrEmail, password, rememberMe);
       const params = new URLSearchParams(window.location.search);
       navigate(params.get('returnTo') || '/');
     } catch {
-      setError('Invalid username or password');
+      setError('Invalid username/email or password');
     } finally {
       setLoading(false);
     }
@@ -40,16 +40,16 @@ export function Login() {
         <h1 style={{ marginBottom: 24, fontSize: 24 }}>Task Tracker</h1>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Username</label>
+            <label style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Username or Email</label>
             <input
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={usernameOrEmail}
+              onChange={e => setUsernameOrEmail(e.target.value)}
               required
               autoComplete="username"
               style={{ width: '100%', padding: '12px', boxSizing: 'border-box', fontSize: 16, borderRadius: 6, border: '1px solid #d1d5db' }}
             />
           </div>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 8 }}>
             <label style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Password</label>
             <div style={{ position: 'relative' }}>
               <input
@@ -75,6 +75,9 @@ export function Login() {
               </button>
             </div>
           </div>
+          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <Link to="/forgot-password" style={{ fontSize: 14, color: '#2563eb' }}>Forgot password?</Link>
+          </div>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input
@@ -98,6 +101,10 @@ export function Login() {
           >
             {loading ? 'Logging in…' : 'Log in'}
           </button>
+          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 14, color: '#6b7280' }}>
+            Don't have an account?{' '}
+            <Link to="/register" style={{ color: '#2563eb' }}>Register</Link>
+          </p>
         </form>
       </div>
     </div>
