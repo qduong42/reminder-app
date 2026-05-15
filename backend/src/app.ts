@@ -7,6 +7,7 @@ import tasksRouter from './routes/tasks';
 import pushRouter from './routes/push';
 import householdsRouter from './routes/households';
 import inviteRouter from './routes/invite';
+import accountRouter from './routes/account';
 
 export function createApp() {
   const app = express();
@@ -22,6 +23,7 @@ export function createApp() {
   app.use('/api/push', pushRouter);
   app.use('/api/households', householdsRouter);
   app.use('/api/invite', inviteRouter);
+  app.use('/api/account', accountRouter);
 
   if (process.env.NODE_ENV === 'production') {
     const frontendDist = path.join(__dirname, '../frontend-dist');

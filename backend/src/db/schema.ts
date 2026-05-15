@@ -1,9 +1,11 @@
 import { pgTable, uuid, text, doublePrecision, timestamp, jsonb, unique } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
+  email: text('email').notNull().unique(),
   pushSubscription: jsonb('push_subscription'),
 });
 
@@ -47,4 +49,12 @@ export const completions = pgTable('completions', {
   taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }).notNull(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   completedAt: timestamp('completed_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  token: text('token').notNull().unique(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

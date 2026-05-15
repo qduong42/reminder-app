@@ -4,24 +4,19 @@
 
 ## Open
 
+_(none)_
+
+---
+
+## Resolved
+
 ### #5 — Household task card shows "Personal" instead of the household name
 
-**Status:** Open
+**Status:** Closed
 
 #### Description
 
-When a task is created under a household, the task card displays it as a personal task rather than showing the household it belongs to.
-
-#### Steps to Reproduce
-
-1. Log in as a user who is an active member of a household.
-2. Create a new task and assign it to a household.
-3. View the task on the Dashboard.
-4. Observe: the task card does not show the household name — it appears as if it is a personal task.
-
-#### Expected Behaviour
-
-The task card shows the household name (e.g. "Due: 18 May · My Household") so the user knows which household the task belongs to.
+When a task is created under a household, the task card displayed it as a personal task rather than showing the household it belongs to.
 
 #### Acceptance Criteria
 
@@ -29,9 +24,35 @@ The task card shows the household name (e.g. "Due: 18 May · My Household") so t
 **When** I view the task on the Dashboard,  
 **Then** the task card displays the household name alongside the due date.
 
+#### Root Cause
+
+`TaskCard.tsx` used `task.ownerId` as the personal/household discriminator (`task.ownerId ? 'personal' : householdName`). But every task has an `ownerId` (the creator) — household tasks too — so the check always evaluated to "personal". Fixed by switching the discriminator to `task.householdId`: `task.householdId ? (householdName ?? 'shared') : 'personal'`.
+
 ---
 
-## Resolved
+### #6 — Cannot switch a task between personal and a household when editing
+
+**Status:** Closed
+
+#### Description
+
+The task edit form did not allow changing the household assignment of an existing task. Once a task was created as personal, it could not be moved to a household, and vice versa.
+
+#### Acceptance Criteria
+
+**Given** I have a personal task,  
+**When** I edit the task and select a household,  
+**Then** the task is reassigned to that household and the card shows the household name.
+
+**Given** I have a household task,  
+**When** I edit the task and select "Personal",  
+**Then** the task is reassigned to me as a personal task and the card shows "personal".
+
+#### Root Cause
+
+`TaskForm.tsx` gated the Household picker behind `!task`, so it was hidden in edit mode. `PATCH /api/tasks/:id` also did not accept `householdId`. Fixed by removing the gate, threading `householdId` through `api.updateTask`, and accepting `householdId` (string or null, validated against active membership) in the backend route.
+
+---
 
 ### #4 — Navigating directly to `/invite/:token` shows raw JSON instead of the invite page
 

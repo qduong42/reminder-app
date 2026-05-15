@@ -36,7 +36,7 @@ export function TaskForm({ task, households, defaultHouseholdId, onSave, onClose
     setLoading(true);
     try {
       if (task) {
-        await api.updateTask(task.id, { name, intervalHours: parsed.hours });
+        await api.updateTask(task.id, { name, intervalHours: parsed.hours, householdId: householdId ?? null });
       } else {
         await api.createTask({ name, intervalHours: parsed.hours, householdId });
       }
@@ -77,21 +77,19 @@ export function TaskForm({ task, households, defaultHouseholdId, onSave, onClose
             {intervalError && <small style={{ color: '#dc2626' }}>{intervalError}</small>}
             <small style={{ color: '#6b7280', display: 'block', marginTop: 2 }}>h = hours · d = days · m = months</small>
           </div>
-          {!task && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Household (optional)</label>
-              <select
-                value={householdId ?? ''}
-                onChange={e => setHouseholdId(e.target.value || undefined)}
-                style={{ width: '100%', padding: '6px 10px', boxSizing: 'border-box' }}
-              >
-                <option value="">Personal task</option>
-                {households.map(h => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', marginBottom: 4 }}>Household (optional)</label>
+            <select
+              value={householdId ?? ''}
+              onChange={e => setHouseholdId(e.target.value || undefined)}
+              style={{ width: '100%', padding: '6px 10px', boxSizing: 'border-box' }}
+            >
+              <option value="">Personal task</option>
+              {households.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="submit" disabled={loading}>
               {loading ? 'Saving…' : task ? 'Save' : 'Create'}

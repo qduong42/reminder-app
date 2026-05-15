@@ -103,7 +103,11 @@ router.patch('/:id', async (req, res) => {
   if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
   if (!(await canAccessTask(existing, userId))) { res.status(403).json({ error: 'Forbidden' }); return; }
 
-  const { name, intervalHours } = req.body as { name?: string; intervalHours?: number };
+  const { name, intervalHours, householdId } = req.body as {
+    name?: string;
+    intervalHours?: number;
+    householdId?: string | null;
+  };
 
   if (name !== undefined && typeof name !== 'string') {
     res.status(400).json({ error: 'name must be a string' }); return;
@@ -111,10 +115,17 @@ router.patch('/:id', async (req, res) => {
   if (intervalHours !== undefined && (typeof intervalHours !== 'number' || intervalHours <= 0 || !isFinite(intervalHours))) {
     res.status(400).json({ error: 'intervalHours must be a positive finite number' }); return;
   }
+  if (householdId !== undefined && householdId !== null && typeof householdId !== 'string') {
+    res.status(400).json({ error: 'householdId must be a string or null' }); return;
+  }
+  if (typeof householdId === 'string' && !(await isActiveMember(householdId, userId))) {
+    res.status(403).json({ error: 'Forbidden' }); return;
+  }
 
   const updates: Partial<typeof tasks.$inferInsert> = {};
   if (name !== undefined) updates.name = name;
   if (intervalHours !== undefined) updates.intervalHours = intervalHours;
+  if (householdId !== undefined) updates.householdId = householdId;
 
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: 'No valid fields to update' }); return;

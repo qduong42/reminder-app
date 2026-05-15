@@ -28,8 +28,8 @@ beforeAll(async () => {
   await db.delete(users).where(eq(users.name, '_hh_user_b_'));
 
   const hash = await bcrypt.hash('pass', 10);
-  const [a] = await db.insert(users).values({ name: '_hh_user_a_', passwordHash: hash }).returning();
-  const [b] = await db.insert(users).values({ name: '_hh_user_b_', passwordHash: hash }).returning();
+  const [a] = await db.insert(users).values({ name: '_hh_user_a_', passwordHash: hash, email: '_hh_user_a_@test.local' }).returning();
+  const [b] = await db.insert(users).values({ name: '_hh_user_b_', passwordHash: hash, email: '_hh_user_b_@test.local' }).returning();
   userAId = a.id;
   userBId = b.id;
 

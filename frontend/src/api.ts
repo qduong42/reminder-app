@@ -12,6 +12,13 @@ export interface Task {
 export interface User {
   id: string;
   name: string;
+  email: string;
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, public body: unknown) {
+    super(`API error ${status}`);
+  }
 }
 
 export interface Household {
@@ -37,17 +44,65 @@ export interface InviteInfo {
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'include', ...options });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (!res.ok) {
+    let body: unknown = null;
+    try { body = await res.json(); } catch { /* response had no JSON body */ }
+    throw new ApiError(res.status, body);
+  }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
 export const api = {
-  login: (name: string, password: string, rememberMe: boolean) =>
+  login: (usernameOrEmail: string, password: string, rememberMe: boolean) =>
     apiFetch<User>('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password, rememberMe }),
+      body: JSON.stringify({ usernameOrEmail, password, rememberMe }),
+    }),
+
+  register: (data: { username: string; email: string; password: string }) =>
+    apiFetch<{ id: string; username: string; email: string }>('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  forgotPassword: (email: string) =>
+    apiFetch<void>('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiFetch<void>(`/api/auth/reset-password/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword }),
+    }),
+
+  getAccount: () => apiFetch<{ id: string; username: string; email: string }>('/api/account'),
+
+  updateIdentity: (data: { username: string; email: string }) =>
+    apiFetch<{ id: string; username: string; email: string }>('/api/account/identity', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  updatePassword: (data: { currentPassword: string; newPassword: string }) =>
+    apiFetch<void>('/api/account/password', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  deleteAccount: (currentPassword: string) =>
+    apiFetch<void>('/api/account', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword }),
     }),
 
   logout: () => apiFetch<void>('/api/auth/logout', { method: 'POST' }),
@@ -70,7 +125,7 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  updateTask: (id: string, data: Partial<{ name: string; intervalHours: number }>) =>
+  updateTask: (id: string, data: Partial<{ name: string; intervalHours: number; householdId: string | null }>) =>
     apiFetch<Task>(`/api/tasks/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
