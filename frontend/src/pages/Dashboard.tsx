@@ -78,6 +78,7 @@ export function Dashboard() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => { setEditTask(null); setShowForm(true); }}>+ New Task</button>
           <button onClick={() => navigate('/households')}>Households</button>
+          <button onClick={() => navigate('/settings')}>Settings</button>
           <button onClick={handleLogout}>Log out</button>
         </div>
       </div>

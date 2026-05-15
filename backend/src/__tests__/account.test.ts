@@ -163,6 +163,13 @@ describe('POST /api/auth/forgot-password', () => {
       .expect(200);
 
     expect(res.body).toEqual({});
+
+    // verify token was inserted
+    const [mainUser] = await db.select().from(users).where(eq(users.name, `${P}main`));
+    const [prtRow] = await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.userId, mainUser.id));
+    expect(prtRow).toBeDefined();
+    // cleanup
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, mainUser.id));
   });
 
   it('unknown email → 200 {} (no enumeration)', async () => {
@@ -392,6 +399,12 @@ describe('PATCH /api/account/password', () => {
 
     expect(res.body).toEqual({});
 
+    // verify new password works
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ usernameOrEmail: `${P}main`, password: newPw });
+    expect(loginRes.status).toBe(200);
+
     // Restore original password
     const hash = await bcrypt.hash(STRONG_PASSWORD, 10);
     await db.update(users).set({ passwordHash: hash }).where(eq(users.name, `${P}main`));
@@ -436,7 +449,7 @@ describe('DELETE /api/account', () => {
 
   afterEach(async () => {
     // Clean up in case a test left user around (e.g. wrong password test)
-    await db.delete(completions);
+    await db.delete(completions).where(eq(completions.userId, delUserId));
     await db.delete(householdMembers).where(eq(householdMembers.userId, delUserId));
     await db.delete(users).where(eq(users.name, `${P}del`));
   });
