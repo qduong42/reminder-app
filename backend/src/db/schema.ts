@@ -54,7 +54,7 @@ export const completions = pgTable('completions', {
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   token: text('token').notNull().unique(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
