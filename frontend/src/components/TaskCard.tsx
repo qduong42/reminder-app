@@ -41,7 +41,7 @@ export function TaskCard({ task, householdName, onComplete, onEdit, onDelete }: 
       </div>
       <div style={{ color: '#4b5563', fontSize: 13, margin: '4px 0 10px' }}>
         Due: {formatDeadline(task.nextDeadline)}
-        &nbsp;·&nbsp;{task.ownerId ? 'personal' : (householdName ?? 'shared')}
+        &nbsp;·&nbsp;{task.householdId ? (householdName ?? 'shared') : 'personal'}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => onComplete(task.id)}>Mark Done</button>
