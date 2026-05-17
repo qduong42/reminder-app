@@ -118,6 +118,7 @@ export function Dashboard() {
               <TaskCard
                 key={task.id}
                 task={task}
+                householdName={task.householdId ? households.find(h => h.id === task.householdId)?.name : undefined}
                 onComplete={handleComplete}
                 onEdit={() => { setEditTask(task); setShowForm(true); }}
                 onDelete={handleDelete}
