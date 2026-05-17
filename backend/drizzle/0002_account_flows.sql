@@ -8,7 +8,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email);
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
   id         TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
   token      TEXT NOT NULL UNIQUE,
-  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
