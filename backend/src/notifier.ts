@@ -3,16 +3,17 @@ import { eq, and, isNotNull } from 'drizzle-orm';
 import { db } from './db';
 import { users, householdMembers } from './db/schema';
 
-const { VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
-if (!VAPID_EMAIL || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-  throw new Error('Missing required VAPID environment variables: VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY');
-}
+let vapidConfigured = false;
 
-webpush.setVapidDetails(
-  `mailto:${VAPID_EMAIL}`,
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY,
-);
+function ensureVapidConfigured(): void {
+  if (vapidConfigured) return;
+  const { VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
+  if (!VAPID_EMAIL || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    throw new Error('Missing required VAPID environment variables: VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY');
+  }
+  webpush.setVapidDetails(`mailto:${VAPID_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  vapidConfigured = true;
+}
 
 export async function sendPushNotification(
   taskName: string,
@@ -41,6 +42,9 @@ export async function sendPushNotification(
   } else {
     return;
   }
+
+  if (targets.length === 0) return;
+  ensureVapidConfigured();
 
   const results = await Promise.allSettled(
     targets
